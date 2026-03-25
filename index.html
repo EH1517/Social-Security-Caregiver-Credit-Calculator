@@ -295,7 +295,7 @@
           <span class="slider-value" id="val-earnings"></span>
         </div>
         <div class="slider-sublabel">Pre-caregiving &amp; post-caregiving wage</div>
-        <input type="range" id="sl-earnings" min="15000" max="168600" step="1000" value="45000">
+        <input type="range" id="sl-earnings" min="15000" max="168600" step="1000" value="40000">
         <div class="slider-bounds"><span>$15,000</span><span>$168,600</span></div>
       </div>
 
@@ -305,8 +305,8 @@
           <span class="slider-value" id="val-parttime"></span>
         </div>
         <div class="slider-sublabel">$0 = fully out of workforce</div>
-        <input type="range" id="sl-parttime" min="0" max="45000" step="1000" value="0">
-        <div class="slider-bounds"><span>$0</span><span id="parttime-max-label">$45,000</span></div>
+        <input type="range" id="sl-parttime" min="0" max="40000" step="1000" value="0">
+        <div class="slider-bounds"><span>$0</span><span id="parttime-max-label">$40,000</span></div>
       </div>
 
       <div class="slider-group">
@@ -314,8 +314,8 @@
           <label class="slider-label">Work Start Age</label>
           <span class="slider-value" id="val-startage"></span>
         </div>
-        <input type="range" id="sl-startage" min="18" max="30" step="1" value="22">
-        <div class="slider-bounds"><span>18</span><span>30</span></div>
+        <input type="range" id="sl-startage" min="18" max="35" step="1" value="26">
+        <div class="slider-bounds"><span>18</span><span>35</span></div>
       </div>
 
       <div class="slider-group">
@@ -323,18 +323,8 @@
           <label class="slider-label">Retirement Age</label>
           <span class="slider-value" id="val-retage"></span>
         </div>
-        <input type="range" id="sl-retage" min="62" max="70" step="1" value="67">
+        <input type="range" id="sl-retage" min="62" max="70" step="1" value="65">
         <div class="slider-bounds"><span>62</span><span>70</span></div>
-      </div>
-
-      <div class="slider-group">
-        <div class="slider-header">
-          <label class="slider-label">Caregiving Start Age</label>
-          <span class="slider-value" id="val-careage"></span>
-        </div>
-        <div class="slider-sublabel">Age when caregiving period begins</div>
-        <input type="range" id="sl-careage" min="18" max="66" step="1" value="28">
-        <div class="slider-bounds"><span id="careage-min-label">18</span><span id="careage-max-label">66</span></div>
       </div>
 
       <div class="slider-group">
@@ -343,7 +333,7 @@
           <span class="slider-value" id="val-careyrs"></span>
         </div>
         <div class="slider-sublabel">Total years out of / reduced in workforce</div>
-        <input type="range" id="sl-careyrs" min="1" max="12" step="1" value="5">
+        <input type="range" id="sl-careyrs" min="1" max="12" step="1" value="7">
         <div class="slider-bounds"><span>1</span><span>12</span></div>
       </div>
     </div>
@@ -380,10 +370,14 @@
     </div>
   </div>
 
+  <!-- Explanation message -->
+  <div id="explanation-msg" style="display:none; background: var(--accent-light); border-radius: 10px; padding: 12px 16px; border: 1px solid #c8ddf0; font-size: 12px; line-height: 1.5; color: var(--accent); margin-bottom: 20px;">
+  </div>
+
   <!-- Chart -->
   <div class="card">
     <div class="chart-header">
-      <div class="section-label" style="margin-bottom:0">Earnings History by Age</div>
+      <div class="section-label" style="margin-bottom:0">Earnings History (Year of Career)</div>
       <div class="legend">
         <span><span class="legend-dot" style="background:var(--bar-normal)"></span>Actual</span>
         <span><span class="legend-dot" style="background:var(--accent)"></span>Credit Applied</span>
@@ -409,7 +403,7 @@
 </div>
 
 <script>
-const HALF_AWI = 18064; // half of $36,128
+const HALF_AWI = 36128; // one half of SSA average wage index (~$72,256 in 2025)
 const BEND1 = 1226;
 const BEND2 = 7391;
 
@@ -426,10 +420,12 @@ function computeAIME(years) {
   return total / (35 * 12);
 }
 
-function buildHistory(startAge, retAge, earnings, careAge, careYrs, partTime) {
+function buildHistory(startAge, retAge, earnings, careYrs, partTime) {
+  const totalYears = retAge - startAge;
   const yrs = [];
-  for (let age = startAge; age < retAge; age++) {
-    if (age >= careAge && age < careAge + careYrs) {
+  // Caregiving years are low/zero earning years; position doesn't matter for AIME
+  for (let i = 0; i < totalYears; i++) {
+    if (i < careYrs) {
       yrs.push(partTime);
     } else {
       yrs.push(earnings);
@@ -464,7 +460,6 @@ const sliders = {
   parttime: sl("sl-parttime"),
   startage: sl("sl-startage"),
   retage: sl("sl-retage"),
-  careage: sl("sl-careage"),
   careyrs: sl("sl-careyrs"),
   credyrs: sl("sl-credyrs"),
 };
@@ -476,7 +471,6 @@ function update() {
   const parttime = +sliders.parttime.value;
   const startage = +sliders.startage.value;
   const retage = +sliders.retage.value;
-  const careage = +sliders.careage.value;
   const careyrs = +sliders.careyrs.value;
   const credyrs = +sliders.credyrs.value;
 
@@ -485,16 +479,8 @@ function update() {
   if (parttime > earnings) sliders.parttime.value = earnings;
   document.getElementById("parttime-max-label").textContent = fmtD(earnings);
 
-  // Sync careage bounds
-  sliders.careage.min = startage;
-  sliders.careage.max = retage - 1;
-  if (careage < startage) sliders.careage.value = startage;
-  if (careage > retage - 1) sliders.careage.value = retage - 1;
-  document.getElementById("careage-min-label").textContent = startage;
-  document.getElementById("careage-max-label").textContent = retage - 1;
-
-  // Sync credit years max
-  const maxCred = Math.min(careyrs, 10);
+  // Sync credit years max (capped at 5 per S.1211 / OACT B7.3)
+  const maxCred = Math.min(careyrs, 5);
   sliders.credyrs.max = maxCred;
   if (credyrs > maxCred) sliders.credyrs.value = maxCred;
   document.getElementById("credyrs-max-label").textContent = maxCred;
@@ -504,7 +490,6 @@ function update() {
   document.getElementById("val-parttime").textContent = fmtD(+sliders.parttime.value);
   document.getElementById("val-startage").textContent = +sliders.startage.value;
   document.getElementById("val-retage").textContent = +sliders.retage.value;
-  document.getElementById("val-careage").textContent = +sliders.careage.value;
   document.getElementById("val-careyrs").textContent = +sliders.careyrs.value;
   document.getElementById("val-credyrs").textContent = +sliders.credyrs.value;
 
@@ -513,11 +498,10 @@ function update() {
   const actualParttime = Math.min(+sliders.parttime.value, actualEarnings);
   const actualStartage = +sliders.startage.value;
   const actualRetage = +sliders.retage.value;
-  const actualCareage = Math.max(+sliders.careage.value, actualStartage);
   const actualCareyrs = +sliders.careyrs.value;
-  const actualCredyrs = Math.min(+sliders.credyrs.value, actualCareyrs);
+  const actualCredyrs = Math.min(+sliders.credyrs.value, actualCareyrs, 5);
 
-  const history = buildHistory(actualStartage, actualRetage, actualEarnings, actualCareage, actualCareyrs, actualParttime);
+  const history = buildHistory(actualStartage, actualRetage, actualEarnings, actualCareyrs, actualParttime);
   const credited = applyCredit(history, actualCredyrs, HALF_AWI);
 
   const aimeBase = computeAIME(history);
@@ -537,6 +521,29 @@ function update() {
   document.getElementById("res-increase").textContent = "+" + fmtD(monthlyInc);
   document.getElementById("res-increase-sub").textContent =
     "+" + fmtD(annualInc) + "/yr · ~" + fmtD(lifetimeInc) + " over " + yrsReceiving + " yrs";
+
+  // Explanation message
+  const msgEl = document.getElementById("explanation-msg");
+  const totalWorkYears = actualRetage - actualStartage;
+  const nonCareYears = totalWorkYears - actualCareyrs;
+  if (monthlyInc === 0 && actualCredyrs > 0) {
+    msgEl.style.display = "block";
+    if (nonCareYears >= 35) {
+      msgEl.innerHTML = "<strong>Why no change?</strong> This worker has " + nonCareYears +
+        " non-caregiving working years — more than the 35 used in the benefit formula. " +
+        "The caregiving zeros are already dropped from the calculation, so the credit has nothing to replace. " +
+        "Try increasing years of caregiving, raising the work start age, or lowering the retirement age to see the credit take effect.";
+    } else if (actualParttime >= HALF_AWI) {
+      msgEl.innerHTML = "<strong>Why no change?</strong> Part-time earnings during caregiving (" +
+        fmtD(actualParttime) + "/yr) already exceed the credit amount (" + fmtD(HALF_AWI) +
+        "/yr), so there is nothing for the credit to replace.";
+    } else {
+      msgEl.innerHTML = "<strong>Why no change?</strong> In this scenario, the caregiver credit does not change the benefit calculation. " +
+        "Try adjusting the parameters to create a scenario where low-earning or zero-earning years are included in the top 35.";
+    }
+  } else {
+    msgEl.style.display = "none";
+  }
 
   // Bars
   const maxVal = Math.max(actualEarnings, HALF_AWI, actualParttime);
@@ -574,7 +581,8 @@ function update() {
 
     const ageLabel = document.createElement("div");
     ageLabel.className = "bar-age";
-    ageLabel.textContent = age % 5 === 0 || i === 0 ? age : "";
+    const yr = i + 1;
+    ageLabel.textContent = yr % 5 === 0 || yr === 1 ? yr : "";
 
     col.appendChild(area);
     col.appendChild(ageLabel);
