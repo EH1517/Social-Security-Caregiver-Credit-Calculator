@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Security Caregiver Credit Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
+    --bg: #f8f7f4;
+    --card-bg: #ffffff;
+    --text: #1a1a1a;
+    --label: #3d3d3d;
+    --muted: #8a8a8a;
+    --accent: #2563a0;
+    --accent-light: #e8f0f8;
+    --border: #e5e3df;
+    --bar-normal: #c4c0b8;
+    --highlight-bg: #fdf6e3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: var(--font-body);
+    color: var(--text);
+    padding: 24px 20px;
+    line-height: 1.5;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  .header-tag {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.15;
+    margin: 0 0 8px;
+    color: var(--text);
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0 0 28px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .slider-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 28px;
+  }
+
+  @media (max-width: 600px) {
+    .slider-grid { grid-template-columns: 1fr; }
+    .results-row { flex-direction: column; }
+  }
+
+  .slider-group { margin-bottom: 20px; }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+
+  .slider-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--label);
+    letter-spacing: 0.02em;
+  }
+
+  .slider-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: var(--font-display);
+  }
+
+  .slider-sublabel {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    margin: 2px 0;
+  }
+
+  .slider-bounds {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .divider {
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 16px;
+  }
+
+  .results-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .result-card {
+    border-radius: 10px;
+    padding: 16px 18px;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .result-card.normal {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+  }
+
+  .result-card.highlight {
+    background: var(--accent);
+  }
+
+  .result-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .result-card.normal .result-label { color: var(--muted); }
+  .result-card.highlight .result-label { color: rgba(255,255,255,0.8); }
+
+  .result-value {
+    font-size: 22px;
+    font-weight: 800;
+    font-family: var(--font-display);
+    line-height: 1.1;
+  }
+
+  .result-card.normal .result-value { color: var(--text); }
+  .result-card.highlight .result-value { color: #fff; }
+
+  .result-sub {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  .result-card.normal .result-sub { color: var(--muted); }
+  .result-card.highlight .result-sub { color: rgba(255,255,255,0.7); }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .bars-container {
+    display: flex;
+    gap: 1px;
+    align-items: flex-end;
+    min-height: 100px;
+  }
+
+  .bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .bar-area {
+    width: 100%;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+  }
+
+  .bar-ghost {
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    width: 80%;
+    border-radius: 3px 3px 0 0;
+    background: var(--accent);
+    opacity: 0.35;
+    transition: height 0.3s ease;
+  }
+
+  .bar-fill {
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    width: 80%;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.3s ease;
+  }
+
+  .bar-age {
+    font-size: 8px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .notes {
+    background: var(--highlight-bg);
+    border-radius: 10px;
+    padding: 14px 18px;
+    border: 1px solid #e8e0c8;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #6b6345;
+  }
+
+  .notes strong { color: #4a4228; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div style="margin-bottom: 28px;">
+    <div class="header-tag">Social Security Policy Tool</div>
+    <h1>Caregiver Credit Calculator</h1>
+    <p class="subtitle">
+      Illustrates how Social Security caregiver credits affect an individual's monthly retirement benefit.
+      Based on OACT provision B7.3: deemed earnings at ½ the average wage index (~<span id="halfAwiDisplay"></span>/yr in 2025) for up to 5 years of caregiving for children under 6.
+    </p>
+  </div>
+
+  <!-- Inputs -->
+  <div class="card">
+    <div class="section-label">Worker Profile</div>
+    <div class="slider-grid">
+      <div class="slider-group">
+        <div class="slider-header">
+          <label class="slider-label">Annual Earnings</label>
+          <span class="slider-value" id="val-earnings"></span>
+        </div>
+        <div class="slider-sublabel">Pre-caregiving &amp; post-caregiving wage</div>
+        <input type="range" id="sl-earnings" min="15000" max="168600" step="1000" value="45000">
+        <div class="slider-bounds"><span>$15,000</span><span>$168,600</span></div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label class="slider-label">Part-Time Earnings During Caregiving</label>
+          <span class="slider-value" id="val-parttime"></span>
+        </div>
+        <div class="slider-sublabel">$0 = fully out of workforce</div>
+        <input type="range" id="sl-parttime" min="0" max="45000" step="1000" value="0">
+        <div class="slider-bounds"><span>$0</span><span id="parttime-max-label">$45,000</span></div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label class="slider-label">Work Start Age</label>
+          <span class="slider-value" id="val-startage"></span>
+        </div>
+        <input type="range" id="sl-startage" min="18" max="30" step="1" value="22">
+        <div class="slider-bounds"><span>18</span><span>30</span></div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label class="slider-label">Retirement Age</label>
+          <span class="slider-value" id="val-retage"></span>
+        </div>
+        <input type="range" id="sl-retage" min="62" max="70" step="1" value="67">
+        <div class="slider-bounds"><span>62</span><span>70</span></div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label class="slider-label">Caregiving Start Age</label>
+          <span class="slider-value" id="val-careage"></span>
+        </div>
+        <div class="slider-sublabel">Age when caregiving period begins</div>
+        <input type="range" id="sl-careage" min="18" max="66" step="1" value="28">
+        <div class="slider-bounds"><span id="careage-min-label">18</span><span id="careage-max-label">66</span></div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label class="slider-label">Years of Caregiving</label>
+          <span class="slider-value" id="val-careyrs"></span>
+        </div>
+        <div class="slider-sublabel">Total years out of / reduced in workforce</div>
+        <input type="range" id="sl-careyrs" min="1" max="12" step="1" value="5">
+        <div class="slider-bounds"><span>1</span><span>12</span></div>
+      </div>
+    </div>
+
+    <div class="divider">
+      <div class="slider-group" style="margin-bottom:0">
+        <div class="slider-header">
+          <label class="slider-label">Years of Credit (Policy Parameter)</label>
+          <span class="slider-value" id="val-credyrs"></span>
+        </div>
+        <div class="slider-sublabel">S.1211 allows up to 5. OACT scored 5. Adjust to model alternatives.</div>
+        <input type="range" id="sl-credyrs" min="0" max="5" step="1" value="5">
+        <div class="slider-bounds"><span>0</span><span id="credyrs-max-label">5</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-row" id="results-row">
+    <div class="result-card normal">
+      <div class="result-label">Monthly Benefit Without Credit</div>
+      <div class="result-value" id="res-base"></div>
+      <div class="result-sub">At full retirement age</div>
+    </div>
+    <div class="result-card highlight">
+      <div class="result-label">Monthly Benefit With Credit</div>
+      <div class="result-value" id="res-credited"></div>
+      <div class="result-sub">At full retirement age</div>
+    </div>
+    <div class="result-card normal">
+      <div class="result-label">Monthly Increase</div>
+      <div class="result-value" id="res-increase"></div>
+      <div class="result-sub" id="res-increase-sub"></div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card">
+    <div class="chart-header">
+      <div class="section-label" style="margin-bottom:0">Earnings History by Age</div>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:var(--bar-normal)"></span>Actual</span>
+        <span><span class="legend-dot" style="background:var(--accent)"></span>Credit Applied</span>
+      </div>
+    </div>
+    <div class="bars-container" id="bars-container"></div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes">
+    <strong>Technical notes.</strong>
+    This calculator uses the 2025 PIA bend points ($1,226 / $7,391) and computes benefits from the highest 35 years of earnings.
+    Deemed wages are set at ½ the 2025 AWI per OACT provision B7.3.
+    Earnings are not indexed for wage growth (all values in 2025 dollars). The credit replaces the lowest-earning years if they fall below the deemed wage amount.
+    This is an illustrative tool — actual benefits depend on full indexed earnings history, claiming age adjustments, and SSA's exact computation methods.
+    Lifetime estimate assumes benefits received from retirement age to age 85.
+  </div>
+
+  <div style="margin-top: 16px; font-size: 10px; color: var(--muted); text-align: center;">
+    Source data: SSA Office of the Chief Actuary, Provision B7.3 (Run 305), September 2025.
+    <br>Tool created for the Family Policy Lab at Capita.
+  </div>
+</div>
+
+<script>
+const HALF_AWI = 18064; // half of $36,128
+const BEND1 = 1226;
+const BEND2 = 7391;
+
+function computePIA(aime) {
+  if (aime <= BEND1) return aime * 0.9;
+  if (aime <= BEND2) return BEND1 * 0.9 + (aime - BEND1) * 0.32;
+  return BEND1 * 0.9 + (BEND2 - BEND1) * 0.32 + (aime - BEND2) * 0.15;
+}
+
+function computeAIME(years) {
+  const sorted = [...years].sort((a, b) => b - a);
+  const top35 = sorted.slice(0, 35);
+  const total = top35.reduce((s, v) => s + v, 0);
+  return total / (35 * 12);
+}
+
+function buildHistory(startAge, retAge, earnings, careAge, careYrs, partTime) {
+  const yrs = [];
+  for (let age = startAge; age < retAge; age++) {
+    if (age >= careAge && age < careAge + careYrs) {
+      yrs.push(partTime);
+    } else {
+      yrs.push(earnings);
+    }
+  }
+  while (yrs.length < 35) yrs.push(0);
+  return yrs;
+}
+
+function applyCredit(history, creditYrs, halfAwi) {
+  const indexed = history.map((e, i) => ({ e, i }));
+  indexed.sort((a, b) => a.e - b.e);
+  const out = [...history];
+  let applied = 0;
+  for (let j = 0; j < indexed.length && applied < creditYrs; j++) {
+    const idx = indexed[j].i;
+    if (out[idx] < halfAwi) {
+      out[idx] = halfAwi;
+      applied++;
+    }
+  }
+  return out;
+}
+
+function fmt(n) { return Math.round(n).toLocaleString("en-US"); }
+function fmtD(n) { return "$" + fmt(n); }
+
+// Elements
+const sl = (id) => document.getElementById(id);
+const sliders = {
+  earnings: sl("sl-earnings"),
+  parttime: sl("sl-parttime"),
+  startage: sl("sl-startage"),
+  retage: sl("sl-retage"),
+  careage: sl("sl-careage"),
+  careyrs: sl("sl-careyrs"),
+  credyrs: sl("sl-credyrs"),
+};
+
+document.getElementById("halfAwiDisplay").textContent = fmtD(HALF_AWI);
+
+function update() {
+  const earnings = +sliders.earnings.value;
+  const parttime = +sliders.parttime.value;
+  const startage = +sliders.startage.value;
+  const retage = +sliders.retage.value;
+  const careage = +sliders.careage.value;
+  const careyrs = +sliders.careyrs.value;
+  const credyrs = +sliders.credyrs.value;
+
+  // Sync part-time max to earnings
+  sliders.parttime.max = earnings;
+  if (parttime > earnings) sliders.parttime.value = earnings;
+  document.getElementById("parttime-max-label").textContent = fmtD(earnings);
+
+  // Sync careage bounds
+  sliders.careage.min = startage;
+  sliders.careage.max = retage - 1;
+  if (careage < startage) sliders.careage.value = startage;
+  if (careage > retage - 1) sliders.careage.value = retage - 1;
+  document.getElementById("careage-min-label").textContent = startage;
+  document.getElementById("careage-max-label").textContent = retage - 1;
+
+  // Sync credit years max
+  const maxCred = Math.min(careyrs, 10);
+  sliders.credyrs.max = maxCred;
+  if (credyrs > maxCred) sliders.credyrs.value = maxCred;
+  document.getElementById("credyrs-max-label").textContent = maxCred;
+
+  // Display values
+  document.getElementById("val-earnings").textContent = fmtD(+sliders.earnings.value);
+  document.getElementById("val-parttime").textContent = fmtD(+sliders.parttime.value);
+  document.getElementById("val-startage").textContent = +sliders.startage.value;
+  document.getElementById("val-retage").textContent = +sliders.retage.value;
+  document.getElementById("val-careage").textContent = +sliders.careage.value;
+  document.getElementById("val-careyrs").textContent = +sliders.careyrs.value;
+  document.getElementById("val-credyrs").textContent = +sliders.credyrs.value;
+
+  // Compute
+  const actualEarnings = +sliders.earnings.value;
+  const actualParttime = Math.min(+sliders.parttime.value, actualEarnings);
+  const actualStartage = +sliders.startage.value;
+  const actualRetage = +sliders.retage.value;
+  const actualCareage = Math.max(+sliders.careage.value, actualStartage);
+  const actualCareyrs = +sliders.careyrs.value;
+  const actualCredyrs = Math.min(+sliders.credyrs.value, actualCareyrs);
+
+  const history = buildHistory(actualStartage, actualRetage, actualEarnings, actualCareage, actualCareyrs, actualParttime);
+  const credited = applyCredit(history, actualCredyrs, HALF_AWI);
+
+  const aimeBase = computeAIME(history);
+  const aimeCred = computeAIME(credited);
+  const piaBase = computePIA(aimeBase);
+  const piaCred = computePIA(aimeCred);
+
+  const monthlyBase = Math.round(piaBase);
+  const monthlyCred = Math.round(piaCred);
+  const monthlyInc = monthlyCred - monthlyBase;
+  const annualInc = monthlyInc * 12;
+  const yrsReceiving = Math.max(0, 85 - actualRetage);
+  const lifetimeInc = annualInc * yrsReceiving;
+
+  document.getElementById("res-base").textContent = fmtD(monthlyBase);
+  document.getElementById("res-credited").textContent = fmtD(monthlyCred);
+  document.getElementById("res-increase").textContent = "+" + fmtD(monthlyInc);
+  document.getElementById("res-increase-sub").textContent =
+    "+" + fmtD(annualInc) + "/yr · ~" + fmtD(lifetimeInc) + " over " + yrsReceiving + " yrs";
+
+  // Bars
+  const maxVal = Math.max(actualEarnings, HALF_AWI, actualParttime);
+  const container = document.getElementById("bars-container");
+  container.innerHTML = "";
+
+  const displayCount = Math.min(history.length, 45);
+  for (let i = 0; i < displayCount; i++) {
+    const age = actualStartage + i;
+    const e = history[i];
+    const c = credited[i];
+    const isCredit = c > e;
+    const hE = maxVal > 0 ? (e / maxVal) * 100 : 0;
+    const hC = maxVal > 0 ? (c / maxVal) * 100 : 0;
+
+    const col = document.createElement("div");
+    col.className = "bar-col";
+
+    const area = document.createElement("div");
+    area.className = "bar-area";
+
+    if (isCredit) {
+      const ghost = document.createElement("div");
+      ghost.className = "bar-ghost";
+      ghost.style.height = hC + "%";
+      area.appendChild(ghost);
+    }
+
+    const fill = document.createElement("div");
+    fill.className = "bar-fill";
+    fill.style.height = hE + "%";
+    fill.style.background = isCredit ? "var(--accent)" : "var(--bar-normal)";
+    fill.style.opacity = isCredit && e < c ? "0.7" : "1";
+    area.appendChild(fill);
+
+    const ageLabel = document.createElement("div");
+    ageLabel.className = "bar-age";
+    ageLabel.textContent = age % 5 === 0 || i === 0 ? age : "";
+
+    col.appendChild(area);
+    col.appendChild(ageLabel);
+    container.appendChild(col);
+  }
+}
+
+// Bind events
+Object.values(sliders).forEach(s => s.addEventListener("input", update));
+
+// Initial render
+update();
+</script>
+</body>
+</html>
